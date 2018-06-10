@@ -1,7 +1,8 @@
 import React from 'react';
 
-export const LoginForm = (props) =>(
-  <form onSubmit={this.login}>
+export const SignInForm = (props) =>(
+  <form onSubmit = {props.signIn}>
+    <h2>Sign In</h2>
     <input
       name="email"
       id="email"
@@ -16,6 +17,6 @@ export const LoginForm = (props) =>(
       placeholder = "Password"
     />
     <br />
-    <input type="submit" value="Login"/>
+    <input type="submit" value="Sign in"/>
   </form>
 )
