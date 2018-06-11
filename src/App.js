@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import {SignInForm, SignUpForm} from './components';
+import {SignInForm, SignUpForm, TransferForm} from './components';
+const CryptoJS = require("crypto-js");
+const uuidv4 = require('uuid/v4');
 
 class App extends Component {
   state = {
@@ -16,6 +18,13 @@ class App extends Component {
     alert("SignedUP")
   }
 
+  encrypt = () => {
+    alert("Encrypt clicked")
+  }
+
+  decrypt = () => {
+    alert("decrypt clicked")
+  }
 
   accaunt = () => {
     this.setState({signedUp: !this.state.signedUp})
