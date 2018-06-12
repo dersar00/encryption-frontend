@@ -27,3 +27,19 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+.View {
+  width:100%;
+  height:auto;
+  display:flex;
+}
+
+.View h1 {
+  text-align: center;
+}
+
+.encrypt, .decrypt{
+  width:50%;
+  height:100px;
+  margin:10px;
+}

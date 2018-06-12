@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import {SignInForm, SignUpForm, TransferForm} from './components';
+import {SignInForm, SignUpForm, EncryptForm} from './components';
 import axios from 'axios';
 const CryptoJS = require("crypto-js");
 const uuidv4 = require('uuid/v4');
@@ -77,8 +77,38 @@ class App extends Component {
     }
   }
 
-  encrypt = () => {
-    alert("Encrypt clicked")
+  encrypt = (e) => {
+    e.preventDefault()
+
+    var file = ""
+    var reader = new FileReader();
+    var uuid = uuidv4();
+    var show_key = document.getElementById('crypt_key')
+    console.log(uuid);
+
+    if(e.target.files.length!=1){
+      alert('Please select a file to decrypt!');
+      return false;
+    }
+
+
+    file = e.target.files[0];
+    console.log(file);
+
+    reader.onload = function(e){
+
+      console.log("HERERERERERERERE\n\n\n" + e.target.result + "\n\n\nDSADSADASDASDASDS");
+
+      var encrypted = CryptoJS.AES.encrypt(e.target.result, uuid);
+
+      console.log(encrypted);
+      show_key.innerHTML = "Decryption key for receiver: " + uuid
+    };
+
+    reader.readAsDataURL(file);
+
+
+
   }
 
   decrypt = () => {
@@ -89,7 +119,19 @@ class App extends Component {
     this.setState({signedUp: !this.state.signedUp})
   }
   render() {
-    if(this.state.signedUp){
+    if(this.state.loggedIn){
+      return(
+        <div className="View">
+          <div className="encrypt">
+            <h1>Encrypt File</h1>
+            <EncryptForm encrypt={this.encrypt} />
+          </div>
+          <div className="files-list">
+            <h1>Files</h1>
+          </div>
+        </div>
+      )
+    } else if(this.state.signedUp){
       return (
         <div className="App">
           <SignInForm signIn={this.signIn}/>
