@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import {SignInForm, SignUpForm, EncryptForm} from './components';
+import {SignInForm, SignUpForm, EncryptForm, DecryptForm} from './components';
 import axios from 'axios';
 const CryptoJS = require("crypto-js");
 const uuidv4 = require('uuid/v4');
@@ -97,8 +97,9 @@ class App extends Component {
 
     reader.onload = function(e){
 
-      console.log("HERERERERERERERE\n\n\n" + e.target.result + "\n\n\nDSADSADASDASDASDS");
-
+      //console.log("HERERERERERERERE\n\n\n" + e.target.result + "\n\n\nDSADSADASDASDASDS");
+      var hash = CryptoJS.SHA256(e.target.result).toString(CryptoJS.enc.Hex);
+      console.log("HASH - " + hash);
       var encrypted = CryptoJS.AES.encrypt(e.target.result, uuid);
 
       console.log(encrypted);
