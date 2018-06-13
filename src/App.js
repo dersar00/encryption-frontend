@@ -93,7 +93,7 @@ class App extends Component {
 
 
     file = e.target.files[0];
-    console.log(file);
+    console.log(file.name);
 
     reader.onload = function(e){
 
@@ -101,6 +101,17 @@ class App extends Component {
       var hash = CryptoJS.SHA256(e.target.result).toString(CryptoJS.enc.Hex);
       console.log("HASH - " + hash);
       var encrypted = CryptoJS.AES.encrypt(e.target.result, uuid);
+
+      const headers = {"file": encrypted, "filename": file.name, "file_hash": hash}
+      axios.post("http://localhost:3001/uploads/files", headers)
+        .then((response) => {
+          console.log(response);
+
+        })
+        .catch((error) => {
+
+        })
+
 
       console.log(encrypted);
       show_key.innerHTML = "Decryption key for receiver: " + uuid
