@@ -9,7 +9,10 @@ const uuidv4 = require('uuid/v4');
 class App extends Component {
   state = {
     signedUp: true,
-    loggedIn: this.authTokenExists()
+    loggedIn: this.authTokenExists(),
+    encrypted: "",
+    hash: "",
+    filename: ""
   }
 
   signIn = (e) => {
@@ -24,6 +27,7 @@ class App extends Component {
         console.log(response);
         localStorage.setItem('authentication_token', response.data.authentication_token);
         localStorage.setItem('email', response.data.email);
+
         this.setState({loggedIn: !this.loggedIn})
         //this.showMessage(response.data.msg)
       })
@@ -80,11 +84,16 @@ class App extends Component {
   encrypt = (e) => {
     e.preventDefault()
 
+
+
     var file = ""
     var reader = new FileReader();
     var uuid = uuidv4();
     var show_key = document.getElementById('crypt_key')
     console.log(uuid);
+
+
+
 
     if(e.target.files.length!=1){
       alert('Please select a file to decrypt!');
@@ -92,30 +101,29 @@ class App extends Component {
     }
 
 
+
     file = e.target.files[0];
     console.log(file.name);
 
+    var hash = CryptoJS.SHA256(e.target.result).toString(CryptoJS.enc.Hex);
+    console.log("HASH - " + hash);
+    var encrypted = CryptoJS.AES.encrypt(e.target.result, uuid);
+
+
+
+
+    this.setState({encrypted: encrypted, hash: hash, filename: file.name})
+
+
+
     reader.onload = function(e){
-
-      //console.log("HERERERERERERERE\n\n\n" + e.target.result + "\n\n\nDSADSADASDASDASDS");
-      var hash = CryptoJS.SHA256(e.target.result).toString(CryptoJS.enc.Hex);
-      console.log("HASH - " + hash);
-      var encrypted = CryptoJS.AES.encrypt(e.target.result, uuid);
-
-      const headers = {"file": encrypted, "filename": file.name, "file_hash": hash}
-      axios.post("http://localhost:3001/uploads/files", headers)
-        .then((response) => {
-          console.log(response);
-
-        })
-        .catch((error) => {
-
-        })
 
 
       console.log(encrypted);
+
       show_key.innerHTML = "Decryption key for receiver: " + uuid
     };
+    //console.log("HERERERERERERERE\n\n\n" + e.target.result + "\n\n\nDSADSADASDASDASDS");
 
     reader.readAsDataURL(file);
 
@@ -127,20 +135,58 @@ class App extends Component {
     alert("decrypt clicked")
   }
 
+  send_encrypted = (e) => {
+
+
+    e.preventDefault()
+
+
+
+    const getCircularReplacer = () => {
+      const seen = new WeakSet;
+      return (key, value) => {
+        if (typeof value === "object" && value !== null) {
+          if (seen.has(value)) {
+            return;
+          }
+          seen.add(value);
+        }
+        return value;
+      };
+    };
+
+    var encrypted = JSON.stringify(this.state.encrypted, getCircularReplacer());
+
+    const headers = {'X-USER-TOKEN': localStorage.getItem('authentication_token'), 'X-USER-EMAIL': localStorage.getItem('email')}
+    const data = {"encrypted_file": {"file": encrypted, "file_name": this.state.filename, "file_hash": this.state.hash}}
+
+    axios.post("http://localhost:3001/api/encrypted_files", data, {headers: headers})
+    .then((response) => {
+      console.log(response);
+    })
+    .catch((error) => {
+
+    })
+
+  }
+
   accaunt = () => {
     this.setState({signedUp: !this.state.signedUp})
   }
   render() {
     if(this.state.loggedIn){
       return(
-        <div className="View">
-          <div className="encrypt">
-            <h1>Encrypt File</h1>
-            <EncryptForm encrypt={this.encrypt} />
+        <div>
+          <div className="View">
+            <div className="encrypt">
+              <h1>Encrypt File</h1>
+              <EncryptForm encrypt={this.encrypt} sendEncrypted={this.send_encrypted}/>
+            </div>
+            <div className="files-list">
+              <h1>Files</h1>
+            </div>
           </div>
-          <div className="files-list">
-            <h1>Files</h1>
-          </div>
+          <button onClick={this.logout}>Logout</button>
         </div>
       )
     } else if(this.state.signedUp){
