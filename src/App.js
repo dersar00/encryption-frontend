@@ -12,7 +12,8 @@ class App extends Component {
     loggedIn: this.authTokenExists(),
     encrypted: "",
     hash: "",
-    filename: ""
+    filename: "",
+    encrypted_list: []
   }
 
   signIn = (e) => {
@@ -131,64 +132,96 @@ class App extends Component {
 
   }
 
-  decrypt = () => {
-    alert("decrypt clicked")
-  }
+
 
   send_encrypted = (e) => {
 
+    if (this.state.encrypted != ""){
+      e.preventDefault()
 
-    e.preventDefault()
 
 
 
-    const getCircularReplacer = () => {
-      const seen = new WeakSet;
-      return (key, value) => {
-        if (typeof value === "object" && value !== null) {
-          if (seen.has(value)) {
-            return;
+
+
+      const getCircularReplacer = () => {
+        const seen = new WeakSet;
+        return (key, value) => {
+          if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+              return;
+            }
+            seen.add(value);
           }
-          seen.add(value);
-        }
-        return value;
+          return value;
+        };
       };
-    };
 
-    var encrypted = JSON.stringify(this.state.encrypted, getCircularReplacer());
+      var encrypted = JSON.stringify(this.state.encrypted, getCircularReplacer());
 
-    const headers = {'X-USER-TOKEN': localStorage.getItem('authentication_token'), 'X-USER-EMAIL': localStorage.getItem('email')}
-    const data = {"encrypted_file": {"file": encrypted, "file_name": this.state.filename, "file_hash": this.state.hash}}
+      const headers = {'X-USER-TOKEN': localStorage.getItem('authentication_token'), 'X-USER-EMAIL': localStorage.getItem('email')}
+      const data = {"encrypted_file": {"file": encrypted, "file_name": this.state.filename, "file_hash": this.state.hash, "user_email": localStorage.getItem('email')}}
 
-    axios.post("http://localhost:3001/api/encrypted_files", data, {headers: headers})
-    .then((response) => {
-      console.log(response);
-    })
-    .catch((error) => {
+      axios.post("http://localhost:3001/api/encrypted_files", data, {headers: headers})
+      .then((response) => {
+        console.log("RESPONSE DATA");
+        console.log(response.data.encrypted_files.length);
+        this.setState({encrypted_list: response.data.encrypted_files})
 
-    })
 
-  }
+        for(var i = 0; i < response.data.encrypted_files.length; i++){
+           var ul = document.getElementById("encrypted-list");
+           var li = document.createElement("li")
+           var content = "<p>" + response.data.encrypted_files[i].file_name + "</p>" + "  -  " + "<label>" + response.data.encrypted_files[i].user_email + "</label>"
+           li.innerHTML = content
+           ul.appendChild(li)
+           li.setAttribute("class", "encr")
+           document.getElementById('encrypted-list').childNodes[i].setAttribute("id", i)
 
-  accaunt = () => {
-    this.setState({signedUp: !this.state.signedUp})
-  }
-  render() {
-    if(this.state.loggedIn){
-      return(
-        <div>
-          <div className="View">
-            <div className="encrypt">
-              <h1>Encrypt File</h1>
-              <EncryptForm encrypt={this.encrypt} sendEncrypted={this.send_encrypted}/>
+           //document.getElementById('encrypted-list').childNodes[i].setAttribute("onclick","javascript:doit();");
+        }
+
+      })
+      .catch((error) => {
+      })
+    } else {
+      alert("choose some file for encryption");
+    }
+
+    }
+
+
+    componentDidMount = () => {
+      alert('ok')
+      document.getElementsByTagName('P').onclick = function (e) {
+
+        console.log(e.target.id);
+
+      }
+    }
+
+    accaunt = () => {
+      this.setState({signedUp: !this.state.signedUp})
+    }
+    render() {
+      if(this.state.loggedIn){
+        return(
+          <div>
+            <div className="View">
+              <div className="encrypt">
+                <h1>Encrypt File</h1>
+                <EncryptForm encrypt={this.encrypt} sendEncrypted={this.send_encrypted}/>
+              </div>
+              <div className="files-list">
+                <h1>Files</h1>
+                <ul id="encrypted-list" className="encr">
+
+                </ul>
+              </div>
             </div>
-            <div className="files-list">
-              <h1>Files</h1>
-            </div>
+            <button onClick={this.logout}>Logout</button>
           </div>
-          <button onClick={this.logout}>Logout</button>
-        </div>
-      )
+        )
     } else if(this.state.signedUp){
       return (
         <div className="App">
