@@ -6,6 +6,6 @@ export const DecryptForm = (props) => (
     <br />
     <input type="field" id="decryption-key"/>
     <br />
-    <input type="button" value="Encrypt" onClick=""/>
+    <input type="button" value="Decrypt" onClick={props.decrypt}/>
   </div>
 )
