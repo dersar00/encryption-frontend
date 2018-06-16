@@ -89,7 +89,7 @@ class App extends Component {
 
     var file = e.target.files[0];
     var reader = new FileReader();
-    var uuid = "123456"//uuidv4();
+    var uuid = uuidv4();
     var show_key = document.getElementById('crypt_key')
     console.log(uuid);
 
