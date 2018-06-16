@@ -2,10 +2,13 @@ import React from 'react';
 
 export const DecryptForm = (props) => (
   <div>
-    <label>Enter file encryption key: </label>
+    <label>Choose file</label>
     <br />
-    <input type="field" id="decryption-key"/>
+    <input type="file" onChange={props.decrypt}/>
     <br />
-    <input type="button" value="Decrypt" onClick={props.decrypt}/>
+    <label>Enter encryption key</label>
+    <br />
+    <input type="field" id="decrypt_pass" />
+    <a id="decrypt_download" onClick={props.decrypt}>Decrypt & Download</a>
   </div>
 )

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import {SignInForm, SignUpForm, EncryptForm, DecryptForm} from './components';
+import {SignInForm, SignUpForm, EncryptForm, DecryptForm,DownloadEncryptForm} from './components';
 import axios from 'axios';
 const CryptoJS = require("crypto-js");
 const uuidv4 = require('uuid/v4');
@@ -102,49 +102,64 @@ class App extends Component {
 
 
       var hash = CryptoJS.SHA256(reader.result).toString(CryptoJS.enc.Hex);
-      console.log(file.name);
-      console.log("HASH - " + hash);
-      console.log(reader.result);
 
-      var encrypted = CryptoJS.AES.encrypt(reader.result, uuid);
-      this.setState({encrypted: reader.result, hash: hash, filename: file.name})
-      console.log("ENCRYPTED");
-      console.log(encrypted);
-
-
-
-      var a = document.getElementById('download')
-
-
-      //a.setAttribute('href', 'data:application/octet-stream,' + encrypted);
-      //a.setAttribute('download', file.name + '.encrypted');
-
-      //var qq = 'data:application/octet-stream,' + encrypted
-
-      //console.log("QQ\n\n\n");
-      //console.log(qq);
-      //console.log("UUID \n\n\n\n\n" + uuid + "\n\n\n\n");
-      //var decrypted = CryptoJS.AES.decrypt(qq, uuid);
-      //console.log("DECRYPTED");
-      //console.log(decrypted.toString(CryptoJS.enc.Latin1));
-
-      //this.setState({encrypted: encrypted, hash: hash, filename: file.name})
+      var encrypted = CryptoJS.AES.encrypt(e.target.result, uuid);
+      this.setState({encrypted: encrypted, hash: hash, filename: file.name})
 
       show_key.innerHTML = "Decryption key for receiver: " + uuid
     };
-    //console.log("HERERERERERERERE\n\n\n" + e.target.result + "\n\n\nDSADSADASDASDASDS");
 
     reader.readAsDataURL(file);
 
   }
 
-  decrypt = () => {
+  download_decrypted = () => {
 
-    alert("decrypt clicked")
-    //var decrypted = CryptoJS.AES.decrypt(this.state.encrypted, "123456");
-    //console.log(this.state.encrypted);
-    //console.log(decrypted.toString(CryptoJS.enc.Latin1));
+    var a = document.getElementById('download')
 
+    a.setAttribute("href", 'data:application/octet-stream,' + this.state.encrypted_list[this.state.decrypt_file_id].file)
+    a.setAttribute('download', this.state.encrypted_list[this.state.decrypt_file_id].file_name + '.encrypted')
+
+  }
+
+  decrypt = (e) => {
+    var password = document.getElementById('decrypt_pass').value
+    var a = document.getElementById('decrypt_download')
+    if(e.target.id == ""){
+      e.preventDefault()
+
+      var file = e.target.files[0];
+      this.setState({file_name: file.name})
+      var reader = new FileReader();
+
+      if(e.target.files.length!=1){
+        alert('Please select a file to decrypt!');
+        return false;
+      }
+
+      reader.onload = (e) => {
+        this.setState({encrypted: reader.result})
+
+      };
+
+      reader.readAsText(file);
+    } else{
+      if (password != ""){
+        console.log(this.state.encrypted);
+        var decrypted = CryptoJS.AES.decrypt(this.state.encrypted, password)
+                    .toString(CryptoJS.enc.Latin1);
+
+        if(!/^data:/.test(decrypted)){
+					alert("Invalid pass phrase or file! Please try again.");
+					return false;
+				}
+
+				a.setAttribute('href', decrypted);
+				a.setAttribute('download', this.state.file_name.replace('.encrypted',''));
+      } else {
+        alert("ENTER DECRYPT PASSWORD")
+      }
+    }
   }
 
 
@@ -154,14 +169,21 @@ class App extends Component {
       e.preventDefault()
 
 
+
       const headers = {'X-USER-TOKEN': localStorage.getItem('authentication_token'), 'X-USER-EMAIL': localStorage.getItem('email')}
-      const data = {"encrypted_file": {"file": this.state.encrypted, "file_name": this.state.filename, "file_hash": this.state.hash, "user_email": localStorage.getItem('email')}}
+      const data = {"encrypted_file": {"file": this.state.encrypted.toString(), "file_name": this.state.filename, "file_hash": this.state.hash, "user_email": localStorage.getItem('email')}}
+
+      console.log("ENCRYPTED HASH BEFORE SEND - " + CryptoJS.SHA256(this.state.encrypted));
+      console.log(CryptoJS.SHA256('data:application/octet-stream,' + this.state.encrypted.toString()).toString());
+      console.log("\n\n\n\n\n\n\n");
+      console.log(CryptoJS.SHA256('data:application/octet-stream,' + this.state.encrypted).toString());
 
       axios.post("http://localhost:3001/api/encrypted_files", data, {headers: headers})
       .then((response) => {
-        console.log("RESPONSE DATA");
-        console.log(response.data.encrypted_files.length);
+        //console.log("RESPONSE DATA");
+        //console.log(response.data.encrypted_files.length);
         this.setState({encrypted_list: response.data.encrypted_files})
+        console.log("ENCRYPTED HASH AFTER RECEIVE - " + CryptoJS.SHA256(response.data.encrypted_files[this.state.encrypted_list.length - 1].file));
 
 
         for(var i = 0; i < response.data.encrypted_files.length; i++){
@@ -212,11 +234,11 @@ class App extends Component {
         return(
           <div>
             <div className="View">
-              <div className="encrypt">
+              <div className="left">
                 <h1>Encrypt File</h1>
                 <EncryptForm encrypt={this.encrypt} sendEncrypted={this.send_encrypted}/>
               </div>
-              <div className="files-list">
+              <div className="right">
                 <h1>Files</h1>
                 <ul id="encrypted-list" className="encr">
 
@@ -245,7 +267,17 @@ class App extends Component {
     } else{
       return (
         <div>
-          <DecryptForm decrypt={this.decrypt} />
+          <div className="View">
+            <div className="left">
+              <h1>Download decrypted file</h1>
+                <DownloadEncryptForm download_decrypted={this.download_decrypted} />
+            </div>
+            <div className="right">
+              <h1>Encrypt File</h1>
+                <DecryptForm decrypt={this.decrypt} />
+            </div>
+          </div>
+          <button onClick={this.logout}>Logout</button>
           <button onClick={this.render_login}>Go Back</button>
         </div>
       )
