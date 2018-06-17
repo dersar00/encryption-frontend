@@ -11,7 +11,6 @@ class App extends Component {
     signedUp: true,
     loggedIn: this.authTokenExists(),
     encrypted: "",
-    hash: "",
     filename: "",
     encrypted_list: [],
     render_decrypt: false,
@@ -101,10 +100,9 @@ class App extends Component {
     reader.onload = (e) => {
 
 
-      var hash = CryptoJS.SHA256(reader.result).toString(CryptoJS.enc.Hex);
 
       var encrypted = CryptoJS.AES.encrypt(e.target.result, uuid);
-      this.setState({encrypted: encrypted, hash: hash, filename: file.name})
+      this.setState({encrypted: encrypted,  filename: file.name})
 
       show_key.innerHTML = "Decryption key for receiver: " + uuid
     };
@@ -171,19 +169,12 @@ class App extends Component {
 
 
       const headers = {'X-USER-TOKEN': localStorage.getItem('authentication_token'), 'X-USER-EMAIL': localStorage.getItem('email')}
-      const data = {"encrypted_file": {"file": this.state.encrypted.toString(), "file_name": this.state.filename, "file_hash": this.state.hash, "user_email": localStorage.getItem('email')}}
+      const data = {"encrypted_file": {"file": this.state.encrypted.toString(), "file_name": this.state.filename, "user_email": localStorage.getItem('email')}}
 
-      console.log("ENCRYPTED HASH BEFORE SEND - " + CryptoJS.SHA256(this.state.encrypted));
-      console.log(CryptoJS.SHA256('data:application/octet-stream,' + this.state.encrypted.toString()).toString());
-      console.log("\n\n\n\n\n\n\n");
-      console.log(CryptoJS.SHA256('data:application/octet-stream,' + this.state.encrypted).toString());
 
       axios.post("http://localhost:3001/api/encrypted_files", data, {headers: headers})
       .then((response) => {
-        //console.log("RESPONSE DATA");
-        //console.log(response.data.encrypted_files.length);
         this.setState({encrypted_list: response.data.encrypted_files})
-        console.log("ENCRYPTED HASH AFTER RECEIVE - " + CryptoJS.SHA256(response.data.encrypted_files[this.state.encrypted_list.length - 1].file));
 
 
         for(var i = 0; i < response.data.encrypted_files.length; i++){
@@ -195,11 +186,9 @@ class App extends Component {
            li.setAttribute("class", "encr")
            document.getElementById('encrypted-list').childNodes[i].childNodes[0].setAttribute("id", i)
 
-           //document.getElementById('encrypted-list').childNodes[i].setAttribute("onclick","javascript:doit();");
         }
 
         document.getElementById('encrypted-list').onclick = (e) =>{
-          console.log(e.target.id);
           this.setState({render_decrypt: !this.state.render_decrypt, decrypt_file_id: e.target.id})
         }
 
@@ -216,14 +205,6 @@ class App extends Component {
       this.setState({render_decrypt: !this.state.render_decrypt})
     }
 
-    //componentDidMount = () => {
-    //  alert('ok')
-    //  document.getElementsByTagName('P').onclick = function (e) {
-
-    //    console.log(e.target.id);
-
-    //  }
-    //}
 
     accaunt = () => {
       this.setState({signedUp: !this.state.signedUp})
